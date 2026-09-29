@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Eco Tower: Skies of Light</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas" width="450" height="800"></canvas>
+    
+    <!-- HUD Layer -->
+    <div id="hud">
+      <div class="hud-row">
+        <div class="hud-item">TẦNG: <span id="floor-counter">0</span>/<span id="target-counter">100</span></div>
+        <div class="hud-item">ĐIỂM: <span id="score-counter">0</span></div>
+        <div class="hud-item">TIM: <span id="heart-counter">❤️❤️❤️</span></div>
+      </div>
+      
+      <!-- Thanh Ô nhiễm Ánh sáng (ESG Meter) -->
+      <div id="pollution-container">
+        <span class="pollution-label">Ô NHIỄM SÁNG:</span>
+        <div class="progress-bar">
+          <div id="pollution-bar" style="width: 0%;"></div>
+        </div>
+        <span id="pollution-percent">0%</span>
+      </div>
+
+      <!-- DEV-15: Thanh hiển thị Level & ID Người chơi -->
+      <div class="hud-row meta-row">
+        <span id="player-tag">ID: ...</span>
+        <div id="level-badges">
+          <button id="btn-lvl-1" class="lvl-badge active">LV 1</button>
+          <button id="btn-lvl-2" class="lvl-badge locked">LV 2 🔒</button>
+          <button id="btn-lvl-3" class="lvl-badge locked">LV 3 🔒</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thanh Kho đồ Item -->
+    <div id="inventory-bar">
+      <button id="btn-slot-green" class="inv-slot" title="Phím Q: Mái Xanh">
+        <span class="slot-icon">🌿</span>
+        <span class="slot-name">Mái Xanh</span>
+        <span id="count-green" class="slot-count">0</span>
+      </button>
+      <button id="btn-slot-neon" class="inv-slot" title="Phím E: Tòa Neon">
+        <span class="slot-icon">💡</span>
+        <span class="slot-name">Tòa Neon</span>
+        <span id="count-neon" class="slot-count">0</span>
+      </button>
+    </div>
+
+    <!-- Feedback text khi xếp -->
+    <div id="combo-feedback"></div>
+
+    <!-- DEV-14: Modal Storyboard (Intro / Outro) -->
+    <div id="storyboard-overlay" class="modal-overlay hidden">
+      <div class="story-box">
+        <div id="story-art" class="story-art">✨</div>
+        <h2 id="story-title">HÀNH TRÌNH TÌM SAO</h2>
+        <p id="story-desc">Bầu trời đêm đã mất đi các vì sao do ánh sáng nhân tạo...</p>
+        <div class="story-actions">
+          <button id="btn-story-skip" class="btn-sub">Bỏ qua</button>
+          <button id="btn-story-next" class="btn-main">Tiếp tục</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
