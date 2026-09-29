@@ -136,8 +136,23 @@ export class Game {
     });
 
     this.ui.btnNext.addEventListener('click', () => {
-      this.ui.endModal.classList.add('hidden');
-      if (this.currentLevel < 3) this.startLevel(this.currentLevel + 1);
+      const nextLvl = this.currentLevel + 1;
+
+      if (this.currentLevel < 3) {
+        // CHỐT CHẶN: Nếu chưa đủ 3 sao, ngăn không cho chuyển map
+        if (this.storage && !this.storage.isLevelUnlocked(nextLvl)) {
+          this.showFeedback(`BẠN PHẢI THU ĐỦ 3 SAO ĐỂ MỞ MAP ${nextLvl}!`);
+          return;
+        }
+        this.ui.endModal.classList.add('hidden');
+        this.startLevel(nextLvl);
+      } else {
+        // Map 3 hoàn thành -> Outro
+        this.ui.endModal.classList.add('hidden');
+        this.playStoryVideo('outro', () => {
+          this.showVictoryScreen();
+        });
+      }
     });
   }
 
@@ -220,11 +235,18 @@ export class Game {
     const variant = variations[Math.floor(Math.random() * variations.length)];
 
     const topBlock = this.landedBlocks[this.landedBlocks.length - 1];
-    const spawnY = topBlock.y - CONFIG.LIGHT_ROPE_LENGTH;
+    
+    // ĐIỂM NEO DÂY:
+    // pivotX: Chính giữa trục ngang màn hình (225px)
+    const pivotX = CONFIG.CANVAS_WIDTH / 2;
+
+    // pivotY: Neo đúng vào mép trên cùng của khung nhìn Camera hiện tại
+    const targetOffset = CONFIG.CANVAS_HEIGHT * 0.70;
+    const pivotY = (topBlock ? topBlock.y : CONFIG.CANVAS_HEIGHT) - targetOffset;
 
     this.currentBlock = new Block(
-      CONFIG.CANVAS_WIDTH / 2 - variant.width / 2,
-      spawnY,
+      pivotX,
+      pivotY,
       variant.width,
       variant.height,
       variant.color,
@@ -232,6 +254,14 @@ export class Game {
     );
 
     this.currentBlock.setInstability(this.cumulativeInstability);
+  }
+  // 2. Thêm hàm tính Rank theo tỷ lệ điểm tối đa trong class Game:
+  evaluateRank(score, maxScore) {
+    const ratio = score / maxScore;
+    if (ratio >= CONFIG.RANK_THRESHOLDS.S) return 'S';
+    if (ratio >= CONFIG.RANK_THRESHOLDS.A) return 'A';
+    if (ratio >= CONFIG.RANK_THRESHOLDS.B) return 'B';
+    return 'C';
   }
 
   dropBlock() {
@@ -309,42 +339,86 @@ export class Game {
     this.camera.update(topBlock.y);
   }
 
-// XỬ LÝ HOÀN THÀNH LEVEL AN TOÀN TUYỆT ĐỐI
+// --- js/game.js ---
   handleLevelCompletion() {
     this.isPaused = true;
+    const lvlCfg = CONFIG.LEVELS[this.currentLevel];
+    const maxPossibleScore = lvlCfg.targetBlocks * 10;
+    const rank = this.evaluateRank(this.score, maxPossibleScore);
     const starsGot = this.stars.collectedCount;
 
-    // 1. Nếu xong Map 3 -> Phát Outro kết game
-    if (this.currentLevel === 3) {
-      setTimeout(() => {
-        this.playStoryVideo('outro', () => {
-          this.showVictoryScreen();
-        });
-      }, 600);
-      return;
+    // Truyền số sao vào Storage để quyết định việc mở map
+    if (this.storage) {
+      this.storage.recordMapResult(this.currentLevel, this.score, rank, starsGot);
     }
 
-    // 2. Cập nhật các thông số cơ bản (có bảo vệ)
-    if (this.ui.endStars) this.ui.endStars.textContent = '⭐'.repeat(starsGot) + '☆'.repeat(3 - starsGot);
-    if (this.ui.endScore) this.ui.endScore.textContent = `Điểm kỹ năng: ${this.score}`;
-    if (this.ui.btnNext) this.ui.btnNext.textContent = `SANG MAP ${this.currentLevel + 1} ❯`;
+    // Hiển thị số sao & Rank
+    if (this.ui.endStars) {
+      this.ui.endStars.innerHTML = `
+        <div style="font-size: 32px; letter-spacing: 4px; margin-bottom: 8px;">
+          ${'⭐'.repeat(starsGot)}${'☆'.repeat(3 - starsGot)}
+        </div>
+        <div>HẠNG: <span class="rank-badge rank-${rank.toLowerCase()}">${rank}</span></div>
+      `;
+    }
 
-    // 3. Nếu thu thập đủ 3/3 sao -> Mở khóa Ký ức hoặc báo hoàn hảo
+    if (this.ui.endScore) {
+      this.ui.endScore.textContent = `Điểm kỹ năng: ${this.score}/${maxPossibleScore} (${Math.round((this.score / maxPossibleScore) * 100)}%)`;
+    }
+
+    // ==========================================================
+    // SIẾT CHẶT ĐIỀU KIỆN MỞ MAP MỚI: BẮT BUỘC 3/3 SAO KÝ ỨC
+    // ==========================================================
     if (starsGot === 3) {
-      if (this.ui.endTitle) this.ui.endTitle.textContent = `HOÀN HẢO MAP ${this.currentLevel}!`;
-      if (this.ui.endHint) {
-        this.ui.endHint.textContent = '✨ Bạn đã mở khóa trọn vẹn Ký Ức của màn chơi!';
-        this.ui.endHint.style.color = '#38bdf8';
+      // --- TRƯỜNG HỢP 1: THU ĐỦ 3/3 SAO -> MỞ KHÓA MAP MỚI ---
+      if (this.ui.endTitle) {
+        this.ui.endTitle.textContent = `HOÀN HẢO MAP ${this.currentLevel}!`;
       }
-    } else {
-      if (this.ui.endTitle) this.ui.endTitle.textContent = `HOÀN THÀNH MAP ${this.currentLevel}!`;
       if (this.ui.endHint) {
-        this.ui.endHint.textContent = `Bạn thu thập được ${starsGot}/3 Sao. Vẫn còn ký ức đang bị bỏ lại!`;
-        this.ui.endHint.style.color = '#facc15';
+        this.ui.endHint.innerHTML = `<span style="color: #38bdf8; font-weight: bold;">✨ ĐÃ THU ĐỦ 3/3 SAO KÝ ỨC! ĐÃ MỞ KHÓA MAP ${this.currentLevel + 1}!</span>`;
+      }
+
+      if (this.ui.btnNext) {
+        this.ui.btnNext.disabled = false;
+        this.ui.btnNext.classList.remove('disabled');
+        if (this.currentLevel < 3) {
+          this.ui.btnNext.textContent = `SANG MAP ${this.currentLevel + 1} ❯`;
+          this.ui.btnNext.style.display = 'block';
+        } else {
+          this.ui.btnNext.textContent = `XEM ĐOẠN KẾT (OUTRO)`;
+        }
+      }
+
+      if (this.ui.btnReplay) {
+        this.ui.btnReplay.textContent = (rank === 'S') ? 'CHƠI LẠI MÀN NÀY' : 'CHƠI LẠI ĐỂ LẤY HẠNG S';
+      }
+
+    } else {
+      // --- TRƯỜNG HỢP 2: THIẾU SAO (< 3 SAO) -> KHÓA NÚT SANG MÀN ---
+      if (this.ui.endTitle) {
+        this.ui.endTitle.textContent = `KẾT THÚC MAP ${this.currentLevel}`;
+      }
+      if (this.ui.endHint) {
+        this.ui.endHint.innerHTML = `
+          <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 8px; padding: 10px; margin: 10px 0;">
+            <p style="color: #f87171; font-weight: bold; margin-bottom: 4px;">🔒 CHƯA ĐỦ ĐIỀU KIỆN MỞ MAP TIẾP THEO!</p>
+            <p style="color: #cbd5e1; font-size: 12px; margin: 0;">Bạn mới thu thập được <b>${starsGot}/3</b> Sao Ký Ức. Bắt buộc phải đạt <b>3/3 Sao</b> để mở Map ${this.currentLevel + 1}.</p>
+          </div>
+        `;
+      }
+
+      // Vô hiệu hóa nút Sang Map
+      if (this.ui.btnNext) {
+        this.ui.btnNext.disabled = true;
+        this.ui.btnNext.classList.add('disabled');
+        this.ui.btnNext.textContent = `MAP ${this.currentLevel + 1} ĐANG KHÓA (CẦN 3/3 ⭐) 🔒`;
+      }
+
+      if (this.ui.btnReplay) {
+        this.ui.btnReplay.textContent = 'CHƠI LẠI ĐỂ TÌM ĐỦ 3 SAO 🔄';
       }
     }
 
-    // Hiển thị bảng tổng kết
     if (this.ui.endModal) {
       this.ui.endModal.classList.remove('hidden');
     }

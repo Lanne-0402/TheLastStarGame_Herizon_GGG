@@ -8,7 +8,7 @@ export class Camera {
   }
 
   update(topBlockY) {
-    const targetOffset = CONFIG.CANVAS_HEIGHT * 0.62;
+    const targetOffset = CONFIG.CANVAS_HEIGHT * 0.70;
     if (topBlockY < targetOffset) {
       this.targetY = topBlockY - targetOffset;
     } else {

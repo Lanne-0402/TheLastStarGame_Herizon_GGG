@@ -451,6 +451,17 @@ canvas {
 
 .btn-action.primary { background: #0284c7;  color: #ffffff; }
 .btn-action:active { transform: scale(0.97);}
+.btn-action:disabled,
+.btn-action.disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  background: #1e293b !important;
+  color: #64748b !important;
+  border: 1px dashed #475569 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  pointer-events: none !important;
+}
 .end-summary-box {
   width: 86%;
   max-width: 360px;
@@ -615,3 +626,45 @@ canvas {
 .memory-fallback-icon { font-size: 54px; }
 #memory-title { font-size: 16px; color: #facc15; margin-bottom: 6px; }
 #memory-desc { font-size: 12px; color: #cbd5e1; line-height: 1.5; margin-bottom: 16px; }
+
+/* HUY HIỆU RANK S / A / B / C */
+.rank-badge {
+  display: inline-block;
+  font-size: 38px;
+  font-weight: 900;
+  padding: 2px 16px;
+  border-radius: 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Rank S: Vàng kim phát sáng */
+.rank-s {
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.15);
+  border: 2px solid #facc15;
+  text-shadow: 0 0 16px rgba(250, 204, 21, 0.8);
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+}
+
+/* Rank A: Xanh dương sáng */
+.rank-a {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 2px solid #38bdf8;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+}
+
+/* Rank B: Xanh lá cây */
+.rank-b {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.15);
+  border: 2px solid #4ade80;
+}
+
+/* Rank C: Xám cam */
+.rank-c {
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.15);
+  border: 2px solid #fb923c;
+}

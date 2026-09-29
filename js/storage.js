@@ -1,6 +1,6 @@
 export class StorageManager {
   constructor() {
-    this.STORAGE_KEY = 'ECO_TOWER_SAVE_DATA';
+    this.STORAGE_KEY = 'THE_LAST_STAR_DATA_V2';
     this.data = this.load();
   }
 
@@ -10,16 +10,14 @@ export class StorageManager {
       const raw = localStorage.getItem(this.STORAGE_KEY);
       if (raw) return JSON.parse(raw);
     } catch (e) {
-      console.warn('LocalStorage không khả dụng, sử dụng bộ nhớ tạm.', e);
+      console.warn('LocalStorage error:', e);
     }
 
-    // Giá trị ban đầu
     const defaultData = {
-      playerId: 'ECO-' + Math.floor(1000 + Math.random() * 9000),
-      unlockedLevels: [1], // Màn 1 mở sẵn
-      highScores: { 1: 0, 2: 0, 3: 0 },
+      unlockedLevels: [1],   // Mở map mới (được phép chơi)
+      completedLevels: [],   // CHỈ HOÀN THÀNH KHI ĐẠT RANK S
       bestRanks: { 1: '-', 2: '-', 3: '-' },
-      introSeen: false
+      bestScores: { 1: 0, 2: 0, 3: 0 }
     };
     this.save(defaultData);
     return defaultData;
@@ -29,35 +27,40 @@ export class StorageManager {
     if (customData) this.data = customData;
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
-    } catch (e) {
-      console.error('Không thể ghi LocalStorage', e);
-    }
+    } catch (e) {}
   }
 
-  unlockLevel(level) {
-    if (!this.data.unlockedLevels.includes(level) && level <= 3) {
-      this.data.unlockedLevels.push(level);
+  // Mở khóa map tiếp theo (không yêu cầu phải có rank S)
+  unlockLevel(lvl) {
+    if (!this.data.unlockedLevels.includes(lvl) && lvl <= 3) {
+      this.data.unlockedLevels.push(lvl);
       this.save();
     }
   }
 
-  isLevelUnlocked(level) {
-    return this.data.unlockedLevels.includes(Number(level));
+  // Ghi nhận kết quả map: Bắt buộc starsGot === 3 mới unlockLevel kế tiếp
+  recordMapResult(lvl, score, rank, starsGot) {
+    // 1. Cập nhật Điểm & Rank cao nhất
+    if (score > (this.data.bestScores[lvl] || 0)) {
+      this.data.bestScores[lvl] = score;
+    }
+    this.data.bestRanks[lvl] = rank;
+
+    // 2. KHÓA CHẶT TIẾN TRÌNH: CHỈ KHI ĐỦ 3/3 SAO MỚI MỞ KHÓA MAP TIẾP THEO
+    if (starsGot === 3 && lvl < 3) {
+      this.unlockLevel(lvl + 1);
+    }
+
+    // 3. Đánh giá hoàn thành map (khi đạt Rank S)
+    if (rank === 'S' && !this.data.completedLevels.includes(lvl)) {
+      this.data.completedLevels.push(lvl);
+    }
+
+    this.save();
   }
 
-  recordLevelResult(level, score, rank) {
-    // Cập nhật Highscore
-    if (score > (this.data.highScores[level] || 0)) {
-      this.data.highScores[level] = score;
-    }
-    // Cập nhật Rank tốt nhất
-    this.data.bestRanks[level] = rank;
-
-    // Tự động mở khóa màn tiếp theo nếu qua màn
-    if (level < 3) {
-      this.unlockLevel(level + 1);
-    }
-    this.save();
+  isMapCompleted(lvl) {
+    return this.data.completedLevels.includes(Number(lvl));
   }
 
   markIntroSeen() {

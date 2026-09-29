@@ -1,7 +1,7 @@
 export const CONFIG = {
   CANVAS_WIDTH: 450,
   CANVAS_HEIGHT: 800,
-  
+  MAX_LIVES: 3,
   // Thông số Level & Test
   TARGET_BLOCKS: 20,
   DEBUG_FAST_WIN: false,
@@ -15,7 +15,6 @@ export const CONFIG = {
 
   // Dung sai tính điểm 
   PERFECT_TOLERANCE: 4, 
-  MAX_LIVES: 3,
 
   LEVELS: {
     1: {
@@ -49,10 +48,18 @@ export const CONFIG = {
       ]
     }
   },
-  // Cơ chế dây ánh sáng
-  LIGHT_ROPE_LENGTH: 160,
-  BASE_SWING_SPEED: 2.2, // Tần số dao động radian/giây
+  // 1. THÔNG SỐ ĐUNG ĐƯA CON LẮC VÒNG CUNG (PENDULUM ARC)
+  ROPE_LENGTH: 280,           // Chiều dài sợi dây ánh sáng
+  BASE_SWING_SPEED: 2.1,      // Tốc độ lắc (rad/s)
+  MAX_SWING_ANGLE: 0.48,      // Biên độ góc lắc (~37 độ tạo đường cong võng rõ rệt)
 
+  // 2. QUY CHUẨN XẾP LOẠI S/A/B/C (Tính trên % điểm tối đa: targetBlocks * 10đ)
+  RANK_THRESHOLDS: {
+    S: 0.95, // Điểm >= 95% điểm tối đa -> RANK S (ĐẠT CHUẨN HOÀN THÀNH MAP)
+    A: 0.80, // Điểm >= 80% -> RANK A
+    B: 0.55, // Điểm >= 55% -> RANK B
+    C: 0.00  // Dưới 55% -> RANK C
+  },
   // Thang điểm theo tỷ lệ Overlap diện tích GDD Mục 8.1
   OVERLAP_RULES: [
     { minRatio: 0.95, score: 10, feedback: 'HOÀN HẢO' },
