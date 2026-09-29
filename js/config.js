@@ -2,16 +2,20 @@ export const CONFIG = {
   CANVAS_WIDTH: 450,
   CANVAS_HEIGHT: 800,
   MAX_LIVES: 3,
+
+  LIGHT_ROPE_LENGTH: 280,       
+  BASE_SWING_SPEED: 2.2,      
+  DROP_SPEED: 850,
   // Thông số Level & Test
   TARGET_BLOCKS: 20,
   DEBUG_FAST_WIN: false,
   
   // Khối nhà mặc định
   BLOCK_WIDTH: 140,
-  BLOCK_HEIGHT: 45,
-  DROP_SPEED: 850,     
-  BASE_SWING_SPEED: 220, 
-  SPEED_INCREMENT: 4.5,  
+  BLOCK_HEIGHT: 45,      
+  SPEED_INCREMENT: 4.5,
+  
+  MAX_SWING_ANGLE: 0.48,      // Biên độ góc lắc (~37 độ tạo đường cong võng rõ rệt)  
 
   // Dung sai tính điểm 
   PERFECT_TOLERANCE: 4, 
@@ -48,10 +52,7 @@ export const CONFIG = {
       ]
     }
   },
-  // 1. THÔNG SỐ ĐUNG ĐƯA CON LẮC VÒNG CUNG (PENDULUM ARC)
-  ROPE_LENGTH: 280,           // Chiều dài sợi dây ánh sáng
-  BASE_SWING_SPEED: 2.1,      // Tốc độ lắc (rad/s)
-  MAX_SWING_ANGLE: 0.48,      // Biên độ góc lắc (~37 độ tạo đường cong võng rõ rệt)
+
 
   // 2. QUY CHUẨN XẾP LOẠI S/A/B/C (Tính trên % điểm tối đa: targetBlocks * 10đ)
   RANK_THRESHOLDS: {

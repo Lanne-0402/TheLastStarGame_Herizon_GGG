@@ -4,76 +4,161 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>THE LAST STAR</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⭐</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⭐</text></svg>">
 </head>
 <body>
   <div id="game-container">
     <canvas id="gameCanvas" width="450" height="800"></canvas>
 
-    <div id="edge-warning-overlay"></div>
-    
-    <!-- HUD Layer -->
-    <div id="hud">
-      <div class="hud-top-row">
-        <div class="hud-item"><span id="heart-counter">❤️❤️❤️</span></div>
-        <div class="hud-item star-pill">KÝ ỨC: <span id="star-counter">0/3</span> ⭐</div>
-        <div class="hud-item">ĐIỂM: <span id="score-counter">0</span></div>
-      </div>
-      <div class="hud-bottom-row">
-        <span id="level-title">MAP 1: NGOẠI Ô</span>
-        <span>TẦNG: <span id="floor-counter">0</span>/<span id="target-counter">15</span></span>
+    <!-- 1. MÀN HÌNH LOADING[cite: 6] -->
+    <div id="screen-loading" class="ui-screen">
+      <img src="assets/images/ui/Loading.png" alt="Loading.." class="img-loading" onerror="this.outerHTML='<div class=\'loading-label\'>Loading..</div>'">
+    </div>
+
+    <!-- 2. MÀN HÌNH MENU CHÍNH[cite: 7] -->
+    <div id="screen-menu" class="ui-screen hidden">
+      <button id="btn-menu-setting" class="btn-img btn-icon-top">
+        <img src="assets/images/ui/btn_setting.png" alt="Setting">
+      </button>
+      <div class="menu-action-group">
+        <button id="btn-play-game" class="btn-img btn-main-action">
+          <img src="assets/images/ui/btn_play.png" alt="Play">
+        </button>
       </div>
     </div>
 
-
-    <!-- Phản hồi chất lượng thả khối -->
-    <div id="combo-feedback"></div>
-
-    <!-- 1. MÀN HÌNH CHẠM ĐỂ BẮT ĐẦU (Giải quyết Autoplay Policy của trình duyệt) -->
-    <div id="start-screen" class="modal-overlay">
-      <div class="start-box">
-        <div class="start-star-art">⭐</div>
-        <h1 class="game-logo">THE LAST STAR</h1>
-        <p class="game-tagline">Ánh sáng phục vụ con người nhưng không che khuất những vì sao</p>
-        <button id="btn-start-game" class="btn-pulse">BẮT ĐẦU HÀNH TRÌNH</button>
-      </div>
-    </div>
-
-    <!-- 2. KHUNG PHÁT VIDEO DỌC 9:16 (Intro & Outro) -->
-    <div id="video-overlay" class="modal-overlay hidden">
-      <div class="video-wrapper">
-        <video id="story-video" playsinline preload="auto"></video>
-        <button id="btn-skip-video" class="btn-skip">BỎ QUA ⏭️</button>
-      </div>
-    </div>
-
-    <!-- 3. POPUP KÝ ỨC GIỮA CÁC MAP (Mở khi đủ 3/3 sao Map 1 & Map 2) -->
-    <div id="memory-modal" class="modal-overlay hidden">
-      <div class="memory-card">
-        <div class="memory-image-holder">
-          <img id="memory-img" class="hidden" alt="Ký ức">
-          <div id="memory-fallback" class="memory-fallback-icon">🌌</div>
+    <!-- 3. UI TRONG TRẬN (IN-GAME HUD)[cite: 9] -->
+    <div id="hud-ingame" class="ui-screen-hud hidden">
+      <div class="hud-left">
+        <div id="heart-bar" class="heart-list">
+          <span class="heart-icon">❤️</span>
+          <span class="heart-icon">❤️</span>
+          <span class="heart-icon">❤️</span>
         </div>
-        <h3 id="memory-title">KÝ ỨC VỀ BẦU TRỜI</h3>
-        <p id="memory-desc">Mô tả ký ức...</p>
-        <button id="btn-close-memory" class="btn-action primary">TIẾP TỤC HÀNH TRÌNH</button>
+        <div id="floor-display" class="hud-floor-text">1/15 Floor</div>
+      </div>
+
+      <div class="hud-center">
+        <div id="score-display" class="hud-score-number">0</div>
+        <div class="star-progress-track">
+          <div id="star-progress-fill" class="star-progress-fill" style="width: 0%;"></div>
+          <div class="star-milestone m-1"><img src="assets/images/ui/star_full.png" alt="star"></div>
+          <div class="star-milestone m-2"><img src="assets/images/ui/star_full.png" alt="star"></div>
+          <div class="star-milestone m-3"><img src="assets/images/ui/star_full.png" alt="star"></div>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <button id="btn-hud-pause" class="btn-img btn-icon-pause">
+          <img src="assets/images/ui/btn_pause.png" alt="Pause">
+        </button>
+      </div>
+
+      <div id="feedback-text" class="feedback-anim">Hoàn hảo</div>
+      <div id="tutorial-guide" class="tutorial-anim">
+        <span class="guide-text">Click!</span>
+        <div class="guide-arrow">▼</div>
       </div>
     </div>
 
-    <!-- 4. MÀN HÌNH TỔNG KẾT HẾT MAP -->
-    <div id="level-end-modal" class="modal-overlay hidden">
-      <div class="end-summary-box">
-        <h2 id="end-title">HOÀN THÀNH BẢN ĐỒ!</h2>
-        <div class="end-stars" id="end-stars-display">⭐⭐⭐</div>
-        <p id="end-score-info">Điểm kỹ năng: 120</p>
-        <p id="end-memory-status" class="memory-hint">Thu đủ 3/3 sao để mở Ký Ức!</p>
-        <div class="end-actions">
-          <button id="btn-replay-map" class="btn-action">CHƠI LẠI (TÌM ĐỦ SAO)</button>
-          <button id="btn-next-map" class="btn-action primary">SANG MÀN TIẾP</button>
+    <!-- 4. POPUP CÀI ĐẶT (SETTING)[cite: 8] -->
+    <div id="popup-setting" class="ui-modal hidden">
+      <div class="modal-card">
+        <!-- Khung nền Popup -->
+        <img src="assets/images/ui/board_popup.png" class="popup-board-bg" alt="Board">
+        <!-- Ruy băng tiêu đề -->
+        <img src="assets/images/ui/ribbon_setting.png" class="popup-ribbon-img" alt="Setting">
+        
+        <div class="popup-inner-content setting-inner">
+          <div class="sound-toggle-row">
+            <button id="btn-toggle-music" class="btn-img btn-toggle-sound">
+              <img src="assets/images/ui/btn_music.png" alt="Music">
+            </button>
+            <button id="btn-toggle-sfx" class="btn-img btn-toggle-sound">
+              <img src="assets/images/ui/btn_sfx.png" alt="SFX">
+            </button>
+          </div>
+          <button id="btn-setting-resume" class="btn-img btn-long">
+            <img src="assets/images/ui/btn_resume.png" alt="Resume">
+          </button>
+          <button id="btn-setting-support" class="btn-img btn-long">
+            <img src="assets/images/ui/btn_support.png" alt="Support">
+          </button>
+          <button id="btn-setting-exit" class="btn-img btn-long">
+            <img src="assets/images/ui/btn_exit.png" alt="Exit">
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. POPUP HOÀN THÀNH (COMPLETE / WIN)[cite: 10] -->
+    <div id="popup-complete" class="ui-modal hidden">
+      <div class="modal-card">
+        <img src="assets/images/ui/board_popup.png" class="popup-board-bg" alt="Board">
+        <img src="assets/images/ui/ribbon_complete.png" class="popup-ribbon-img" alt="Complete">
+
+        <div class="popup-inner-content">
+          <!-- Hàng 3 sao -->
+          <div class="stars-result-row">
+            <img id="win-star-1" src="assets/images/ui/star_full.png" class="result-star-img side" alt="Star">
+            <img id="win-star-2" src="assets/images/ui/bigstar_full.png" class="result-star-img center" alt="Star">
+            <img id="win-star-3" src="assets/images/ui/star_full.png" class="result-star-img side" alt="Star">
+          </div>
+
+          <div class="score-label-text">Score</div>
+          
+          <!-- Hộp điểm số -->
+          <div class="score-box-wrapper">
+            <img src="assets/images/ui/box_score.png" class="score-box-img" alt="Score Box">
+            <span id="win-score-box" class="score-number-overlay">1000</span>
+          </div>
+
+          <!-- Cụm nút hành động -->
+          <div class="popup-actions-row">
+            <button id="btn-win-home" class="btn-img btn-action-square">
+              <img src="assets/images/ui/btn_home.png" alt="Home">
+            </button>
+            <button id="btn-win-replay" class="btn-img btn-action-square">
+              <img src="assets/images/ui/btn_replay.png" alt="Replay">
+            </button>
+            <button id="btn-win-next" class="btn-img btn-action-square">
+              <img src="assets/images/ui/btn_pause.png" alt="Next">
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. POPUP THẤT BẠI (FAILED / GAME OVER)[cite: 11] -->
+    <div id="popup-failed" class="ui-modal hidden">
+      <div class="modal-card">
+        <img src="assets/images/ui/board_popup.png" class="popup-board-bg" alt="Board">
+        <img src="assets/images/ui/ribbon_failed.png" class="popup-ribbon-img" alt="Failed">
+
+        <div class="popup-inner-content">
+          <div class="stars-result-row">
+            <img src="assets/images/ui/star_empty.png" class="result-star-img center" alt="Star">
+          </div>
+
+          <div class="score-label-text">Score</div>
+
+          <div class="score-box-wrapper">
+            <img src="assets/images/ui/box_score.png" class="score-box-img" alt="Score Box">
+            <span id="fail-score-box" class="score-number-overlay">0</span>
+          </div>
+
+          <div class="popup-actions-row">
+            <button id="btn-fail-home" class="btn-img btn-action-square">
+              <img src="assets/images/ui/btn_home.png" alt="Home">
+            </button>
+            <button id="btn-fail-replay" class="btn-img btn-action-square">
+              <img src="assets/images/ui/btn_replay.png" alt="Replay">
+            </button>
+          </div>
         </div>
       </div>
     </div>
