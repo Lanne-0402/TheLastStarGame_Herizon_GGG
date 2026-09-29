@@ -668,3 +668,78 @@ canvas {
   background: rgba(251, 146, 60, 0.15);
   border: 2px solid #fb923c;
 }
+/* --- HỘP THÔNG BÁO TRẠNG THÁI CUỐI MAP --- */
+.status-box {
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 12px 0 16px 0;
+  text-align: left;
+}
+
+.status-box.success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid #22c55e;
+}
+.status-box.success .status-title {
+  color: #4ade80;
+  font-weight: 800;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.status-box.warning {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid #eab308;
+}
+.status-box.warning .status-title {
+  color: #facc15;
+  font-weight: 800;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.status-box.danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+}
+.status-box.danger .status-title {
+  color: #f87171;
+  font-weight: 800;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.status-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+/* NÚT BỊ KHÓA KHI THIẾU SAO */
+.btn-action:disabled,
+.btn-action.disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  background: #1e293b !important;
+  color: #64748b !important;
+  border: 1px dashed #475569 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  pointer-events: none !important;
+}
+
+/* HUY HIỆU RANK */
+.rank-badge {
+  display: inline-block;
+  font-size: 26px;
+  font-weight: 900;
+  padding: 2px 14px;
+  border-radius: 8px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.rank-s { color: #facc15; background: rgba(250, 204, 21, 0.15); border: 2px solid #facc15; }
+.rank-a { color: #38bdf8; background: rgba(56, 189, 248, 0.15); border: 2px solid #38bdf8; }
+.rank-b { color: #4ade80; background: rgba(74, 222, 128, 0.15); border: 2px solid #4ade80; }
+.rank-c { color: #fb923c; background: rgba(251, 146, 60, 0.15); border: 2px solid #fb923c; }
