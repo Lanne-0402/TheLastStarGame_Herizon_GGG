@@ -18,10 +18,50 @@ export const CONFIG = {
   MAX_LIVES: 3,
 
   LEVELS: {
-    1: { name: 'Thành Phố Bình Minh', theme: 'city', bg: '#0f172a' },
-    2: { name: 'Vùng Biển Lộng Gió', theme: 'sea', bg: '#082f49' },
-    3: { name: 'Tầng Khí Quyển Bão', theme: 'storm', bg: '#18181b' }
+    1: {
+      name: 'Ngoại Ô Thành Phố',
+      targetBlocks: 15,
+      starMilestones: [4, 9, 14], // Xuất hiện sao ở các mốc block
+      blockVariations: [
+        { width: 140, height: 42, color: '#38bdf8' },
+        { width: 120, height: 40, color: '#60a5fa' },
+        { width: 150, height: 45, color: '#0284c7' }
+      ]
+    },
+    2: {
+      name: 'Bãi Biển Lộng Gió',
+      targetBlocks: 20,
+      starMilestones: [6, 12, 19],
+      blockVariations: [
+        { width: 130, height: 40, color: '#0d9488' },
+        { width: 110, height: 38, color: '#14b8a6' },
+        { width: 140, height: 44, color: '#0f766e' }
+      ]
+    },
+    3: {
+      name: 'Tầng Mây & Bầu Trời Mở',
+      targetBlocks: 30,
+      starMilestones: [8, 18, 29],
+      blockVariations: [
+        { width: 120, height: 40, color: '#818cf8' },
+        { width: 100, height: 38, color: '#6366f1' },
+        { width: 135, height: 42, color: '#4f46e5' }
+      ]
+    }
   },
+  // Cơ chế dây ánh sáng
+  LIGHT_ROPE_LENGTH: 160,
+  BASE_SWING_SPEED: 2.2, // Tần số dao động radian/giây
+
+  // Thang điểm theo tỷ lệ Overlap diện tích GDD Mục 8.1
+  OVERLAP_RULES: [
+    { minRatio: 0.95, score: 10, feedback: 'HOÀN HẢO' },
+    { minRatio: 0.80, score: 8, feedback: 'RẤT TỐT' },
+    { minRatio: 0.60, score: 6, feedback: 'TỐT' },
+    { minRatio: 0.40, score: 4, feedback: 'OK' },
+    { minRatio: 0.25, score: 2, feedback: 'NGUY HIỂM' }
+  ], 
+  
   SEAGULL_SPAWN_INTERVAL: 3.5,
   SEAGULL_SPEED: 180,
   SEAGULL_DEFLECTION: 35,

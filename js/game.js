@@ -2,322 +2,243 @@ import { CONFIG } from './config.js';
 import { Camera } from './camera.js';
 import { Block, BlockState } from './block.js';
 import { HazardManager } from './hazards.js';
-import { ItemManager } from './items.js';
-import { StorageManager } from './storage.js';
+import { StarManager } from './stars.js';
 import { ParallaxBackground } from './background.js';
+import { ASSETS, soundManager, assetLoader } from './assets.js';
 
 export class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.container = document.getElementById('game-container');
-    
+
     this.camera = new Camera();
     this.hazards = new HazardManager();
-    this.items = new ItemManager();
-    this.storage = new StorageManager();
+    this.stars = new StarManager();
     this.bg = new ParallaxBackground();
 
     this.currentLevel = 1;
     this.landedBlocks = [];
     this.currentBlock = null;
-    
     this.lives = CONFIG.MAX_LIVES;
     this.score = 0;
     this.floor = 0;
-    this.pollution = 0;
-    this.maxFloors = CONFIG.DEBUG_FAST_WIN ? 15 : CONFIG.TARGET_BLOCKS;
 
-    this.lastTime = 0;
+    this.cumulativeInstability = 0; // Độ lệch tích lũy làm dây lắc mạnh hơn
+    this.isPaused = true; // Tạm dừng lúc đầu cho màn hình Start
     this.isGameOver = false;
-    this.isVictory = false;
-    this.isPaused = false; // CỜ QUẢN LÝ TẠM DỪNG VÒNG LẶP KHI ĐỌC TRUYỆN
-    this.finalRank = 'C';
 
-    this.storyIndex = 0;
-    this.storyMode = 'intro';
-    this.introSlides = [
-      {
-        art: '🏙️💡',
-        title: 'BẦU TRỜI LÃNG QUÊN',
-        desc: 'Ánh sáng nhân tạo và năng lượng lãng phí từ các đại đô thị đã phủ mờ bầu trời đêm. Những chòm sao rực rỡ từ ngàn xưa nay đã biến mất hoàn toàn.'
+    // Nội dung text dự phòng cho Ký Ức Map 1 và Map 2[cite: 5]
+    this.memoryTexts = {
+      1: {
+        title: 'KÝ ỨC 1: MÁI ẤM & BẦU TRỜI SAO',
+        desc: 'Sinh linh nhìn thấy gia đình quây quần bên hiên nhà với một ngọn đèn nhỏ. Ánh sáng cần thiết cho cuộc sống vẫn có thể chan hòa cùng bóng đêm kỳ vĩ.'
       },
-      {
-        art: '✨🌱',
-        title: 'SỨ MỆNH LINH HỒN',
-        desc: 'Là một sinh linh ánh sáng, bạn mang sứ mệnh xếp chồng các tầng tháp sinh thái, đưa ngọn tháp vượt qua tầng mây ô nhiễm để tìm lại các vì sao.'
-      },
-      {
-        art: '⚖️⭐',
-        title: 'CÂN BẰNG BỀN VỮNG',
-        desc: 'Sử dụng Tòa Neon sẽ cho điểm số lớn nhưng sinh ra ô nhiễm sáng cực nặng. Hãy cân bằng bằng Mái Xanh để đạt chuẩn Rank S và thu thập trọn vẹn Ngôi sao!'
+      2: {
+        title: 'KÝ ỨC 2: BIỂN CẢ VÀ ĐÈN DẪN LỐI',
+        desc: 'Những ngư dân dùng ánh sáng vừa đủ để làm việc và định hướng trên biển, nhường lại khoảng trời đêm cho các vì sao chỉ đường.'
       }
-    ];
+    };
 
-    this.outroSlides = [
-      {
-        art: '🌌🎉',
-        title: 'CHÒM SAO ĐÃ TỎA SÁNG!',
-        desc: 'Bạn đã đưa tháp xuyên qua tầng khí quyển giông bão. Năng lượng xanh đã thắp sáng cộng đồng mà không làm mất đi vẻ đẹp kỳ vĩ của vũ trụ.'
-      },
-      {
-        art: '🏆🌟',
-        title: 'SỨ GIẢ NĂNG LƯỢNG ESG',
-        desc: 'Demo hoàn tất xuất sắc! Bạn đã chứng minh: Năng lượng cho tất cả mọi người (SDG 7) chỉ thực sự có ý nghĩa khi đi kèm với bảo vệ sinh thái.'
-      }
-    ];
-
-    this.uiElements = {
+    this.storyQueue = []; // Hàng đợi các trang truyện cần chiếu
+    this.container = document.getElementById('game-container');
+    this.ui = {
       floor: document.getElementById('floor-counter'),
       target: document.getElementById('target-counter'),
       score: document.getElementById('score-counter'),
       hearts: document.getElementById('heart-counter'),
+      stars: document.getElementById('star-counter'),
+      levelTitle: document.getElementById('level-title'),
       feedback: document.getElementById('combo-feedback'),
-      pollutionBar: document.getElementById('pollution-bar'),
-      pollutionPercent: document.getElementById('pollution-percent'),
-      countGreen: document.getElementById('count-green'),
-      countNeon: document.getElementById('count-neon'),
-      btnGreen: document.getElementById('btn-slot-green'),
-      btnNeon: document.getElementById('btn-slot-neon'),
-      playerTag: document.getElementById('player-tag'),
-      storyModal: document.getElementById('storyboard-overlay'),
-      storyArt: document.getElementById('story-art'),
-      storyTitle: document.getElementById('story-title'),
-      storyDesc: document.getElementById('story-desc'),
-      btnStoryNext: document.getElementById('btn-story-next'),
-      btnStorySkip: document.getElementById('btn-story-skip')
+      edgeOverlay: document.getElementById('edge-warning-overlay'),
+
+      startScreen: document.getElementById('start-screen'),
+      btnStartGame: document.getElementById('btn-start-game'),
+
+      videoOverlay: document.getElementById('video-overlay'),
+      video: document.getElementById('story-video'),
+      btnSkipVideo: document.getElementById('btn-skip-video'),
+
+      memoryModal: document.getElementById('memory-modal'),
+      memoryImg: document.getElementById('memory-img'),
+      memoryFallback: document.getElementById('memory-fallback'),
+      memoryTitle: document.getElementById('memory-title'),
+      memoryDesc: document.getElementById('memory-desc'),
+      btnCloseMemory: document.getElementById('btn-close-memory'),
+
+      endModal: document.getElementById('level-end-modal'),
+      endTitle: document.getElementById('end-title'),
+      endStars: document.getElementById('end-stars-display'),
+      endScore: document.getElementById('end-score-info'),
+      endHint: document.getElementById('end-memory-status'),
+      btnReplay: document.getElementById('btn-replay-map'),
+      btnNext: document.getElementById('btn-next-map')
     };
 
     this.init();
   }
 
   init() {
-    if (this.uiElements.target) this.uiElements.target.textContent = this.maxFloors;
-    if (this.uiElements.playerTag) this.uiElements.playerTag.textContent = `ID: ${this.storage.data.playerId}`;
-
-    this.setupInputs();
-    this.setupStoryboardEvents();
-
-    // 1. LUÔN KHỞI TẠO MÀN 1 ĐỂ DỰNG SẴN KHỐI MÓNG
-    this.startLevel(1);
-
-    // 2. NẾU CHƯA XEM INTRO THÌ MỞ POPUP VÀ TẠM DỪNG GAMEPLAY
-    if (!this.storage.data.introSeen) {
-      this.openStoryboard('intro');
-    }
-
+    this.setupEvents();
     requestAnimationFrame(this.loop.bind(this));
   }
 
-  restart() {
-    this.startLevel(this.currentLevel || 1);
-  }
-
-  openStoryboard(mode = 'intro') {
-    this.storyMode = mode;
-    this.storyIndex = 0;
-    this.isPaused = true; // Tạm dừng chuyển động
-    if (this.uiElements.storyModal) {
-      this.uiElements.storyModal.classList.remove('hidden');
-    }
-    this.renderStorySlide();
-  }
-
-  renderStorySlide() {
-    const list = this.storyMode === 'intro' ? this.introSlides : this.outroSlides;
-    const slide = list[this.storyIndex];
-
-    if (this.uiElements.storyArt) this.uiElements.storyArt.textContent = slide.art;
-    if (this.uiElements.storyTitle) this.uiElements.storyTitle.textContent = slide.title;
-    if (this.uiElements.storyDesc) this.uiElements.storyDesc.textContent = slide.desc;
-    if (this.uiElements.btnStoryNext) {
-      this.uiElements.btnStoryNext.textContent = (this.storyIndex === list.length - 1) ? 'BẮT ĐẦU' : 'TIẾP TỤC';
-    }
-  }
-
-  setupStoryboardEvents() {
-    if (this.uiElements.btnStoryNext) {
-      this.uiElements.btnStoryNext.addEventListener('click', () => {
-        const list = this.storyMode === 'intro' ? this.introSlides : this.outroSlides;
-        this.storyIndex++;
-        if (this.storyIndex >= list.length) {
-          this.closeStoryboard();
-        } else {
-          this.renderStorySlide();
-        }
+  setupEvents() {
+    // 1. Khi bấm "BẮT ĐẦU HÀNH TRÌNH" -> Kích hoạt Video Intro
+    this.ui.btnStartGame.addEventListener('click', () => {
+      this.ui.startScreen.classList.add('hidden');
+      this.playStoryVideo('intro', () => {
+        this.startLevel(1);
       });
-    }
+    });
 
-    if (this.uiElements.btnStorySkip) {
-      this.uiElements.btnStorySkip.addEventListener('click', () => {
-        this.closeStoryboard();
-      });
-    }
+    // 2. Nút Bỏ qua Video
+    this.ui.btnSkipVideo.addEventListener('click', () => {
+      this.stopVideoAndContinue();
+    });
 
-    for (let lvl = 1; lvl <= 3; lvl++) {
-      const btn = document.getElementById(`btn-lvl-${lvl}`);
-      if (btn) {
-        btn.addEventListener('click', () => {
-          if (this.storage.isLevelUnlocked(lvl)) {
-            this.startLevel(lvl);
-          } else {
-            this.showFeedback(`MÀN ${lvl} ĐANG KHÓA!`);
-          }
-        });
+    // Khi video phát xong tự động chuyển tiếp
+    this.ui.video.addEventListener('ended', () => {
+      this.stopVideoAndContinue();
+    });
+
+    // Nếu Artist chưa xuất video mp4 -> Tự động bỏ qua không để game bị kẹt
+    this.ui.video.addEventListener('error', () => {
+      console.warn('Chưa tìm thấy file video. Tự động chuyển vào gameplay.');
+      this.stopVideoAndContinue();
+    });
+
+    // 3. Đóng popup ký ức giữa màn
+    this.ui.btnCloseMemory.addEventListener('click', () => {
+      this.ui.memoryModal.classList.add('hidden');
+      if (this.currentLevel < 3) {
+        this.startLevel(this.currentLevel + 1);
       }
-    }
-  }
+    });
 
-  closeStoryboard() {
-    if (this.uiElements.storyModal) {
-      this.uiElements.storyModal.classList.add('hidden');
-    }
-    this.isPaused = false; // Cho phép tiếp tục chơi
-    if (this.storyMode === 'intro') {
-      this.storage.markIntroSeen();
-    } else {
-      this.startLevel(1);
-    }
-  }
-
-  triggerScreenShake() {
-    if (this.container) {
-      this.container.classList.remove('shake-screen');
-      void this.container.offsetWidth;
-      this.container.classList.add('shake-screen');
-      setTimeout(() => this.container.classList.remove('shake-screen'), 360);
-    }
-  }
-
-  refreshLevelBadges() {
-    for (let lvl = 1; lvl <= 3; lvl++) {
-      const btn = document.getElementById(`btn-lvl-${lvl}`);
-      if (btn) {
-        const isUnlocked = this.storage.isLevelUnlocked(lvl);
-        btn.classList.toggle('locked', !isUnlocked);
-        btn.classList.toggle('active', this.currentLevel === lvl);
-        btn.textContent = isUnlocked ? `LV ${lvl}` : `LV ${lvl} 🔒`;
-      }
-    }
-  }
-
-  setupInputs() {
-    const triggerDrop = (e) => {
-      // Khi đang tạm dừng đọc truyện thì không thả khối
+    // 4. Các nút tương tác thả khối
+    window.addEventListener('pointerdown', (e) => {
       if (this.isPaused) return;
+      if (e.target.closest('button') || e.target.closest('.modal-overlay')) return;
+      this.dropBlock();
+    });
 
-      if (e.target && (e.target.closest('#inventory-bar') || e.target.closest('#storyboard-overlay') || e.target.closest('#level-badges'))) {
-        return;
-      }
-
-      if (e.type === 'touchstart' || (e.type === 'keydown' && e.code === 'Space')) {
-        e.preventDefault();
-      }
-
-      if (this.isGameOver || this.isVictory) {
-        this.restart();
-        return;
-      }
-
-      if (this.currentBlock && this.currentBlock.state === BlockState.SWINGING) {
-        this.currentBlock.drop();
-      }
-    };
-
-    window.addEventListener('pointerdown', triggerDrop);
-    
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') triggerDrop(e);
-      if (e.key === 'q' || e.key === 'Q') this.useItem('green');
-      if (e.key === 'e' || e.key === 'E') this.useItem('neon');
-
-      // Phím tắt chuyển Level nhanh cho BGK
+      if (e.code === 'Space' && !this.isPaused) this.dropBlock();
+      // Phím tắt kiểm thử nhanh cho BGK
       if (e.key === '1') this.startLevel(1);
       if (e.key === '2') this.startLevel(2);
       if (e.key === '3') this.startLevel(3);
     });
 
-    if (this.uiElements.btnGreen) {
-      this.uiElements.btnGreen.addEventListener('click', () => this.useItem('green'));
-    }
-    if (this.uiElements.btnNeon) {
-      this.uiElements.btnNeon.addEventListener('click', () => this.useItem('neon'));
-    }
+    this.ui.btnReplay.addEventListener('click', () => {
+      this.ui.endModal.classList.add('hidden');
+      this.startLevel(this.currentLevel);
+    });
+
+    this.ui.btnNext.addEventListener('click', () => {
+      this.ui.endModal.classList.add('hidden');
+      if (this.currentLevel < 3) this.startLevel(this.currentLevel + 1);
+    });
   }
 
-  useItem(type) {
-    if (this.isGameOver || this.isVictory || this.isPaused) return;
-    const success = this.items.selectType(type);
-    if (success) {
-      const itemKey = type.toUpperCase();
-      const itemCfg = CONFIG.ITEM_TYPES[itemKey] || CONFIG.ITEM_TYPES.GREEN || CONFIG.ITEM_TYPES.NORMAL;
-      this.showFeedback(`ĐÃ CHỌN: ${itemCfg.name.toUpperCase()}`);
+  playStoryVideo(type, onComplete) {
+    this.isPaused = true;
+    this.onVideoEndCallback = onComplete;
 
-      if (this.currentBlock && this.currentBlock.state === BlockState.SWINGING) {
-        const nextType = this.items.consumeNextType();
-        this.currentBlock = new Block(
-          this.currentBlock.x,
-          this.currentBlock.y,
-          CONFIG.BLOCK_WIDTH,
-          CONFIG.BLOCK_HEIGHT,
-          this.currentBlock.speed,
-          false,
-          nextType
-        );
-      }
-      this.updateHUD();
-    } else {
-      this.showFeedback('HẾT VẬT PHẨM!');
+    const videoSrc = (ASSETS && ASSETS.VIDEOS && ASSETS.VIDEOS[type]) ? ASSETS.VIDEOS[type] : null;
+
+    // Nếu không có file cấu hình, tự động lướt qua ngay lập tức
+    if (!videoSrc) {
+      this.stopVideoAndContinue();
+      return;
+    }
+
+    // Kiểm tra nhanh xem server có file video không trước khi gọi play()
+    fetch(videoSrc, { method: 'HEAD' })
+      .then((res) => {
+        if (res.ok) {
+          this.ui.video.src = videoSrc;
+          this.ui.videoOverlay.classList.remove('hidden');
+          this.ui.video.play().catch(() => {
+            this.stopVideoAndContinue();
+          });
+        } else {
+          console.warn(`File video [${type}] chưa có sẵn trên server. Bỏ qua video.`);
+          this.stopVideoAndContinue();
+        }
+      })
+      .catch(() => {
+        this.stopVideoAndContinue();
+      });
+  }
+
+  stopVideoAndContinue() {
+    this.ui.video.pause();
+    this.ui.videoOverlay.classList.add('hidden');
+    if (this.onVideoEndCallback) {
+      const cb = this.onVideoEndCallback;
+      this.onVideoEndCallback = null;
+      cb();
     }
   }
 
   startLevel(lvl) {
     this.currentLevel = Number(lvl);
+    const lvlCfg = CONFIG.LEVELS[this.currentLevel];
+
     this.landedBlocks = [];
     this.camera.reset();
-    this.hazards.reset();
-    this.items.reset();
-
     this.lives = CONFIG.MAX_LIVES;
     this.score = 0;
     this.floor = 0;
-    this.pollution = 0;
+    this.cumulativeInstability = 0;
     this.isGameOver = false;
-    this.isVictory = false;
+    this.isPaused = false;
 
-    // Tạo khối móng vững chắc dưới đáy
+    // Khối móng nền
     const baseBlock = new Block(
-      (CONFIG.CANVAS_WIDTH - CONFIG.BLOCK_WIDTH) / 2,
+      (CONFIG.CANVAS_WIDTH - 150) / 2,
       CONFIG.CANVAS_HEIGHT - 60,
-      CONFIG.BLOCK_WIDTH,
-      CONFIG.BLOCK_HEIGHT,
-      0,
+      150,
+      45,
+      '#475569',
       true
     );
     this.landedBlocks.push(baseBlock);
 
+    this.stars.setupLevel(lvlCfg, baseBlock.y);
     this.hazards.setupLevel(this.currentLevel, baseBlock.y);
+
     this.spawnNextBlock();
     this.updateHUD();
-    this.refreshLevelBadges();
-    this.showFeedback(`MÀN ${this.currentLevel}: ${CONFIG.LEVELS[this.currentLevel].name.toUpperCase()}`);
+    this.showFeedback(`BẮT ĐẦU: ${lvlCfg.name.toUpperCase()}`);
   }
 
   spawnNextBlock() {
-    const currentSpeed = CONFIG.BASE_SWING_SPEED + (this.floor * CONFIG.SPEED_INCREMENT);
+    const lvlCfg = CONFIG.LEVELS[this.currentLevel];
+    const variations = lvlCfg.blockVariations;
+    const variant = variations[Math.floor(Math.random() * variations.length)];
+
     const topBlock = this.landedBlocks[this.landedBlocks.length - 1];
-    const spawnY = (topBlock ? topBlock.y : CONFIG.CANVAS_HEIGHT) - 180;
-    const blockType = this.items.consumeNextType();
+    const spawnY = topBlock.y - CONFIG.LIGHT_ROPE_LENGTH;
 
     this.currentBlock = new Block(
-      0,
+      CONFIG.CANVAS_WIDTH / 2 - variant.width / 2,
       spawnY,
-      CONFIG.BLOCK_WIDTH,
-      CONFIG.BLOCK_HEIGHT,
-      currentSpeed,
-      false,
-      blockType
+      variant.width,
+      variant.height,
+      variant.color,
+      false
     );
+
+    this.currentBlock.setInstability(this.cumulativeInstability);
+  }
+
+  dropBlock() {
+    if (this.currentBlock && this.currentBlock.state === BlockState.SWINGING) {
+      this.currentBlock.drop();
+      soundManager.play('drop');
+    }
   }
 
   loop(timestamp) {
@@ -327,64 +248,60 @@ export class Game {
 
     this.update(dt);
     this.render();
-
     requestAnimationFrame(this.loop.bind(this));
   }
 
   update(dt) {
-    // Nếu game kết thúc hoặc đang mở Storyboard thì không chạy vật lý
-    if (this.isGameOver || this.isVictory || this.isPaused) return;
-
-    // CHỐT CHẶN AN TOÀN: Đảm bảo landedBlocks luôn có ít nhất 1 phần tử
+    if (this.isPaused || this.isGameOver) return;
     const topBlock = this.landedBlocks[this.landedBlocks.length - 1];
     if (!topBlock) return;
 
     this.hazards.update(dt, this.currentLevel, this.currentBlock, topBlock.y);
-    this.items.update(dt);
+    this.stars.update(dt);
 
     if (this.currentBlock) {
       this.currentBlock.update(dt);
 
+      // --- KIỂM TRA VA CHẠM VIỀN KHI ĐANG RƠI ---
       if (this.currentBlock.isFalling()) {
-        const collectedType = this.items.checkBlockCollision(this.currentBlock);
-        if (collectedType) {
-          const itemKey = collectedType.toUpperCase();
-          const itemCfg = CONFIG.ITEM_TYPES[itemKey] || CONFIG.ITEM_TYPES.GREEN || CONFIG.ITEM_TYPES.NORMAL;
-          this.showFeedback(`+1 ${itemCfg.name.toUpperCase()}!`);
+        // Nếu chạm sát hoặc vượt mép trái (x <= 0) hoặc mép phải (x + width >= CANVAS_WIDTH)
+        if (this.currentBlock.x <= 0 || (this.currentBlock.x + this.currentBlock.width) >= CONFIG.CANVAS_WIDTH) {
+          this.handleMiss('CHẠM VIỀN! (-1 TIM)', true);
+          return; // Ngắt cập nhật lượt rơi này và sinh khối mới
+        }
+
+        // Nhặt sao nếu chạm
+        if (this.stars.checkCollision(this.currentBlock)) {
+          if (typeof soundManager !== 'undefined') soundManager.play('star');
+          this.showFeedback('+1 SAO KÝ ỨC! ⭐');
           this.updateHUD();
         }
       }
 
-      if (this.currentBlock.state === BlockState.FALLING) {
+      // --- XỬ LÝ TIẾP ĐẤT & MISS DO TRƯỢT ĐẾ ---
+      if (this.currentBlock && this.currentBlock.state === BlockState.FALLING) {
         const result = this.currentBlock.checkLanding(topBlock);
 
         if (result) {
-          this.showFeedback(result.feedback);
           if (result.success) {
+            if (typeof soundManager !== 'undefined') soundManager.play('land');
+            this.showFeedback(`${result.feedback} (${Math.round(result.ratio * 100)}%)`);
             this.landedBlocks.push(this.currentBlock);
             this.floor++;
             this.score += result.score;
+            this.cumulativeInstability += Math.max(0, 0.95 - result.ratio) * 0.4;
 
-            this.adjustPollution(this.currentBlock.typeConfig.pollutionDelta);
-            this.items.spawnItemIfEligible(this.floor, this.currentBlock.y);
-
-            if (this.floor >= this.maxFloors) {
-              this.isVictory = true;
-              this.calculateRank();
-              this.handleVictoryProgress();
+            const targetBlocks = CONFIG.LEVELS[this.currentLevel].targetBlocks;
+            if (this.floor >= targetBlocks) {
+              this.handleLevelCompletion();
             } else {
               this.spawnNextBlock();
             }
+            this.updateHUD();
           } else {
-            this.lives--;
-            this.triggerScreenShake();
-            if (this.lives <= 0) {
-              this.isGameOver = true;
-            } else {
-              this.spawnNextBlock();
-            }
+            // Miss do diện tích overlap < 25% hoặc trượt đế
+            this.handleMiss('TRƯỢT ĐẾ! (-1 TIM)', false);
           }
-          this.updateHUD();
         }
       }
     }
@@ -392,131 +309,133 @@ export class Game {
     this.camera.update(topBlock.y);
   }
 
-  adjustPollution(delta) {
-    this.pollution = Math.max(0, Math.min(100, this.pollution + delta));
-    if (this.pollution >= 100) {
-      this.lives--;
-      this.triggerScreenShake();
-      this.pollution = 60;
-      this.showFeedback('CẢNH BÁO: Ô NHIỄM ĐẠT ĐỈNH! (-1 TIM)');
-      if (this.lives <= 0) this.isGameOver = true;
-    }
-  }
+// XỬ LÝ HOÀN THÀNH LEVEL AN TOÀN TUYỆT ĐỐI
+  handleLevelCompletion() {
+    this.isPaused = true;
+    const starsGot = this.stars.collectedCount;
 
-  calculateRank() {
-    const maxPossibleScore = this.maxFloors * 12;
-    const accuracy = this.score / maxPossibleScore;
-
-    if (accuracy >= 0.80 && this.pollution <= 30) {
-      this.finalRank = 'S';
-    } else if (accuracy >= 0.65 && this.pollution <= 50) {
-      this.finalRank = 'A';
-    } else if (accuracy >= 0.45) {
-      this.finalRank = 'B';
-    } else {
-      this.finalRank = 'C';
-    }
-  }
-
-  handleVictoryProgress() {
-    this.storage.recordLevelResult(this.currentLevel, this.score, this.finalRank);
-    this.refreshLevelBadges();
-
+    // 1. Nếu xong Map 3 -> Phát Outro kết game
     if (this.currentLevel === 3) {
       setTimeout(() => {
-        this.openStoryboard('outro');
-      }, 1200);
+        this.playStoryVideo('outro', () => {
+          this.showVictoryScreen();
+        });
+      }, 600);
+      return;
+    }
+
+    // 2. Cập nhật các thông số cơ bản (có bảo vệ)
+    if (this.ui.endStars) this.ui.endStars.textContent = '⭐'.repeat(starsGot) + '☆'.repeat(3 - starsGot);
+    if (this.ui.endScore) this.ui.endScore.textContent = `Điểm kỹ năng: ${this.score}`;
+    if (this.ui.btnNext) this.ui.btnNext.textContent = `SANG MAP ${this.currentLevel + 1} ❯`;
+
+    // 3. Nếu thu thập đủ 3/3 sao -> Mở khóa Ký ức hoặc báo hoàn hảo
+    if (starsGot === 3) {
+      if (this.ui.endTitle) this.ui.endTitle.textContent = `HOÀN HẢO MAP ${this.currentLevel}!`;
+      if (this.ui.endHint) {
+        this.ui.endHint.textContent = '✨ Bạn đã mở khóa trọn vẹn Ký Ức của màn chơi!';
+        this.ui.endHint.style.color = '#38bdf8';
+      }
+    } else {
+      if (this.ui.endTitle) this.ui.endTitle.textContent = `HOÀN THÀNH MAP ${this.currentLevel}!`;
+      if (this.ui.endHint) {
+        this.ui.endHint.textContent = `Bạn thu thập được ${starsGot}/3 Sao. Vẫn còn ký ức đang bị bỏ lại!`;
+        this.ui.endHint.style.color = '#facc15';
+      }
+    }
+
+    // Hiển thị bảng tổng kết
+    if (this.ui.endModal) {
+      this.ui.endModal.classList.remove('hidden');
+    }
+  }
+
+  showVictoryScreen() {
+    if (this.ui.endTitle) this.ui.endTitle.textContent = 'HOÀN THÀNH TẤT CẢ MAP!';
+    if (this.ui.endStars) this.ui.endStars.textContent = '⭐⭐⭐';
+    if (this.ui.endScore) this.ui.endScore.textContent = `Tổng điểm: ${this.score}`;
+    if (this.ui.endHint) this.ui.endHint.textContent = 'Chúc mừng bạn đã khôi phục lại bầu trời đêm!';
+    if (this.ui.btnNext) {
+      this.ui.btnNext.textContent = 'CHƠI LẠI TỪ ĐẦU';
+      this.ui.btnNext.onclick = () => { location.reload(); };
+    }
+    if (this.ui.endModal) {
+      this.ui.endModal.classList.remove('hidden');
     }
   }
 
   showFeedback(text) {
-    if (!this.uiElements.feedback) return;
-    this.uiElements.feedback.textContent = text;
-    this.uiElements.feedback.classList.add('show');
+    this.ui.feedback.textContent = text;
+    this.ui.feedback.classList.add('show');
     clearTimeout(this.feedbackTimer);
     this.feedbackTimer = setTimeout(() => {
-      this.uiElements.feedback.classList.remove('show');
+      this.ui.feedback.classList.remove('show');
     }, 650);
   }
 
   updateHUD() {
-    if (this.uiElements.floor) this.uiElements.floor.textContent = this.floor;
-    if (this.uiElements.score) this.uiElements.score.textContent = this.score;
-    if (this.uiElements.hearts) this.uiElements.hearts.textContent = '❤️'.repeat(Math.max(0, this.lives));
-    
-    if (this.uiElements.countGreen) this.uiElements.countGreen.textContent = this.items.inventory.green;
-    if (this.uiElements.countNeon) this.uiElements.countNeon.textContent = this.items.inventory.neon;
-
-    if (this.uiElements.pollutionBar) {
-      this.uiElements.pollutionBar.style.width = `${this.pollution}%`;
-      this.uiElements.pollutionBar.style.backgroundColor = 
-        this.pollution > 75 ? '#ef4444' : (this.pollution > 45 ? '#eab308' : '#22c55e');
-    }
-    if (this.uiElements.pollutionPercent) {
-      this.uiElements.pollutionPercent.textContent = `${this.pollution}%`;
-    }
+    const lvlCfg = CONFIG.LEVELS[this.currentLevel];
+    this.ui.floor.textContent = this.floor;
+    this.ui.target.textContent = lvlCfg.targetBlocks;
+    this.ui.score.textContent = this.score;
+    this.ui.hearts.textContent = '❤️'.repeat(Math.max(0, this.lives));
+    this.ui.stars.textContent = `${this.stars.collectedCount}/3`;
+    this.ui.levelTitle.textContent = `MAP ${this.currentLevel}: ${lvlCfg.name.toUpperCase()}`;
   }
 
   render() {
     this.bg.render(this.ctx, this.camera, this.currentLevel, this.floor);
+    this.hazards.render(this.ctx, this.camera, this.currentLevel);
+    this.stars.render(this.ctx, this.camera);
+    for (const b of this.landedBlocks) b.render(this.ctx, this.camera);
+    if (this.currentBlock) this.currentBlock.render(this.ctx, this.camera);
+  }
 
-    if (this.hazards) {
-      this.hazards.render(this.ctx, this.camera, this.currentLevel);
-    }
-
-    if (this.items) {
-      this.items.render(this.ctx, this.camera);
-    }
-
-    for (const block of this.landedBlocks) {
-      block.render(this.ctx, this.camera);
-    }
-
-    if (this.currentBlock) {
-      this.currentBlock.render(this.ctx, this.camera);
-    }
-
-    this.renderGoalStar();
-
-    if (this.isGameOver) {
-      this.renderOverlay('THẤT BẠI', 'Chạm vào màn hình để thử lại', '#ef4444');
-    } else if (this.isVictory) {
-      const isRankS = this.finalRank === 'S';
-      const rankMsg = isRankS 
-        ? 'XUẤT SẮC! Bầu trời sao đã trở lại' 
-        : 'Cần đạt Rank S để hoàn thành Level';
-      this.renderOverlay(`HẠNG [ ${this.finalRank} ]`, `${rankMsg} | Điểm: ${this.score}`, isRankS ? '#facc15' : '#38bdf8');
+  // Hiệu ứng Rung màn hình khi Miss
+  triggerScreenShake() {
+    if (this.container) {
+      this.container.classList.remove('shake-screen');
+      void this.container.offsetWidth; // Ép reflow để restart animation
+      this.container.classList.add('shake-screen');
+      setTimeout(() => {
+        if (this.container) this.container.classList.remove('shake-screen');
+      }, 360);
     }
   }
 
-  renderGoalStar() {
-    if (this.landedBlocks.length === 0) return;
-    const topBlock = this.landedBlocks[this.landedBlocks.length - 1];
-    if (this.floor >= this.maxFloors - 1) {
-      const starY = topBlock.y - 120 - this.camera.y;
-      this.ctx.save();
-      this.ctx.font = '40px sans-serif';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('⭐', CONFIG.CANVAS_WIDTH / 2, starY);
-      this.ctx.restore();
+  // Hiệu ứng Viền đỏ bao quanh màn hình
+  triggerEdgeBorderFlash() {
+    if (this.ui.edgeOverlay) {
+      this.ui.edgeOverlay.classList.add('show');
+      clearTimeout(this.edgeTimer);
+      this.edgeTimer = setTimeout(() => {
+        if (this.ui.edgeOverlay) this.ui.edgeOverlay.classList.remove('show');
+      }, 450);
     }
   }
 
-  renderOverlay(title, subtitle, color) {
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.82)';
-    this.ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+  // Hàm xử lý chung khi bị MISS hoặc CHẠM VIỀN
+  handleMiss(reason, isWallHit = false) {
+    if (typeof soundManager !== 'undefined') soundManager.play('miss');
+    
+    // Kích hoạt rung màn hình cho mọi trường hợp miss
+    this.triggerScreenShake();
 
-    this.ctx.textAlign = 'center';
-    this.ctx.fillStyle = color;
-    this.ctx.font = 'bold 36px sans-serif';
-    this.ctx.fillText(title, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 25);
+    // Nếu chạm viền thì hiển thị thêm viền đỏ bao quanh
+    if (isWallHit) {
+      this.triggerEdgeBorderFlash();
+    }
 
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.font = '15px sans-serif';
-    this.ctx.fillText(subtitle, CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 25);
+    this.lives--;
+    this.showFeedback(reason);
+    this.updateHUD();
 
-    this.ctx.fillStyle = '#94a3b8';
-    this.ctx.font = '13px sans-serif';
-    this.ctx.fillText('Chạm để chơi lại | Đổi Màn ở góc trên', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 65);
+    if (this.lives <= 0) {
+      this.isGameOver = true;
+      this.showFeedback('THẤT BẠI - HẾT MẠNG!');
+      setTimeout(() => this.startLevel(this.currentLevel), 1500);
+    } else {
+      this.spawnNextBlock();
+    }
   }
 }

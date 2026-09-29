@@ -13,7 +13,7 @@ body {
   align-items: center;
   min-height: 100vh;
   overflow: hidden;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
 }
 
 #game-container {
@@ -180,18 +180,18 @@ canvas {
 .modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(11, 15, 25, 0.92);
+  background: rgba(3, 7, 18, 0.92);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100;
-  backdrop-filter: blur(4px);
-  transition: opacity 0.3s ease;
+  z-index: 120;
+  backdrop-filter: blur(6px);
+  transition: opacity 0.25s ease;
 }
 
-.modal-overlay.hidden {
-  opacity: 0;
-  pointer-events: none;
+.modal-overlay.hidden,
+.hidden {
+  display: none !important;
 }
 
 .story-box {
@@ -264,3 +264,354 @@ canvas {
   30%, 50%, 70% { transform: translate3d(-6px, 3px, 0); }
   40%, 60% { transform: translate3d(6px, -3px, 0); }
 }
+
+#edge-warning-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 4px solid #ef4444;
+  box-shadow: inset 0 0 35px rgba(239, 68, 68, 0.85), 0 0 25px rgba(239, 68, 68, 0.85);
+  opacity: 0;
+  z-index: 80;
+  transition: opacity 0.12s ease-out;
+}
+
+#edge-warning-overlay.show {
+  opacity: 1;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  background-color: #030712;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+#game-container {
+  position: relative;
+  width: 100%;
+  max-width: 450px;
+  height: 100vh;
+  max-height: 800px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.hud-top-row, .hud-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hud-bottom-row {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.star-pill {
+  background: rgba(30, 41, 59, 0.7);
+  padding: 2px 10px;
+  border-radius: 12px;
+  border: 1px solid #eab308;
+  color: #facc15;
+}
+
+#combo-feedback {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 26px;
+  font-weight: 900;
+  color: #facc15;
+  pointer-events: none;
+  opacity: 0;
+  text-shadow: 0 0 12px rgba(250, 204, 21, 0.6);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+#combo-feedback.show {
+  opacity: 1;
+  transform: translate(-50%, -60%);
+}
+
+/* OVERLAY VÀ KHUNG TRANH MANGA */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.94);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  backdrop-filter: blur(6px);
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.manga-frame {
+  width: 88%;
+  background: #0f172a;
+  border: 2px solid #38bdf8;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+.manga-art-container {
+  width: 100%;
+  height: 240px;
+  background: #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.manga-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.manga-image.hidden {
+  display: none;
+}
+
+.manga-placeholder {
+  font-size: 64px;
+  animation: pulseStar 1.8s infinite;
+}
+
+@keyframes pulseStar {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.manga-caption h3 {
+  color: #38bdf8;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.manga-caption p {
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.btn-manga, .btn-action {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  background: #334155;
+  color: #f8fafc;
+  transition: transform 0.1s, background 0.2s;
+}
+
+.btn-action.primary { background: #0284c7;  color: #ffffff; }
+.btn-action:active { transform: scale(0.97);}
+.end-summary-box {
+  width: 86%;
+  max-width: 360px;
+  background: #0f172a;
+  border: 2px solid #eab308;
+  border-radius: 16px;
+  padding: 24px 20px;
+  text-align: center;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+.end-summary-box h2 {
+  font-size: 20px;
+  color: #38bdf8;
+  margin-bottom: 8px;
+}
+
+.end-stars { font-size: 34px;  margin: 12px 0;  letter-spacing: 4px;}
+#end-score-info { 
+  font-size: 15px;
+  font-weight: bold;
+  color: #cbd5e1;
+  margin-bottom: 6px;
+}
+.memory-hint { 
+  font-size: 13px;
+  color: #facc15;
+  margin-bottom: 20px;
+  line-height: 1.4; 
+}
+.end-actions { 
+  display: flex;
+  flex-direction: column;
+  gap: 10px; 
+}
+
+/* --- GIAO DIỆN KHỞI ĐỘNG (START SCREEN) --- */
+.start-box {
+  text-align: center;
+  padding: 30px 20px;
+  color: #fff;
+  max-width: 380px;
+}
+
+.start-star-art {
+  font-size: 64px;
+  margin-bottom: 12px;
+  animation: floatStar 2s ease-in-out infinite;
+}
+
+@keyframes floatStar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.game-logo {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #38bdf8;
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+  margin-bottom: 8px;
+}
+
+.game-tagline {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-bottom: 30px;
+}
+
+.btn-pulse {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  color: #0f172a;
+  border: none;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 14px 28px;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(14, 165, 233, 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-pulse:active { transform: scale(0.96); }
+
+/* --- KHUNG PHÁT VIDEO DỌC 9:16 (VIDEO OVERLAY) --- */
+#video-overlay {
+  background: #000;
+  z-index: 150;
+}
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000;
+}
+
+#story-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Đảm bảo video 9:16 tràn đều khớp khung điện thoại */
+}
+
+.btn-skip {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.btn-skip:active {
+  background: rgba(56, 189, 248, 0.8);
+  color: #0f172a;
+}
+
+/* --- POPUP KÝ ỨC GIỮA CÁC MAP --- */
+.memory-card {
+  width: 86%;
+  background: #0f172a;
+  border: 2px solid #eab308;
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+.memory-image-holder {
+  width: 100%;
+  height: 220px;
+  background: #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.memory-image-holder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.memory-fallback-icon { font-size: 54px; }
+#memory-title { font-size: 16px; color: #facc15; margin-bottom: 6px; }
+#memory-desc { font-size: 12px; color: #cbd5e1; line-height: 1.5; margin-bottom: 16px; }
