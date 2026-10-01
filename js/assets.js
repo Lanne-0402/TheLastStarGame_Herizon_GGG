@@ -1,17 +1,23 @@
 // 1. CẤU HÌNH ĐƯỜNG DẪN TÀI NGUYÊN (PLUG & PLAY)
 export const ASSETS = {
-  VIDEOS: {
-    intro: 'assets/videos/intro.mp4',
-    outro: 'assets/videos/outro.mp4'
-  },
   STORY_IMAGES: {
     page4: 'assets/images/story/page_4.png',
     page5: 'assets/images/story/page_5.png'
   },
+  BACKGROUNDS: {
+    map1: 'assets/images/backgrounds/map_1.png',
+    map2: 'assets/images/backgrounds/map_2.png',
+    map3: 'assets/images/backgrounds/map_3.png'
+  },
   BLOCKS: {
-    map1: ['assets/images/blocks/m1_1.png', 'assets/images/blocks/m1_2.png'],
-    map2: ['assets/images/blocks/m2_1.png', 'assets/images/blocks/m2_2.png'],
-    map3: ['assets/images/blocks/m3_1.png', 'assets/images/blocks/m3_2.png']
+    map1: 'assets/images/blocks/soil_block.png',
+    map2: 'assets/images/blocks/cloud_block.png',
+    map3: 'assets/images/blocks/meteor_block.png'
+  },
+  SPRITE_BOUNDS: {
+    'assets/images/blocks/soil_block.png': { x: 36, y: 62, width: 401, height: 288 },
+    'assets/images/blocks/cloud_block.png': { x: 517, y: 113, width: 1278, height: 1367 },
+    'assets/images/blocks/meteor_block.png': { x: 0, y: 0, width: 1026, height: 590 }
   },
   SOUNDS: {
     drop: 'assets/sounds/drop.mp3',

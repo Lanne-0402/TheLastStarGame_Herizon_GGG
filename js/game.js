@@ -54,10 +54,6 @@ export class Game {
       startScreen: document.getElementById('start-screen'),
       btnStartGame: document.getElementById('btn-start-game'),
 
-      videoOverlay: document.getElementById('video-overlay'),
-      video: document.getElementById('story-video'),
-      btnSkipVideo: document.getElementById('btn-skip-video'),
-
       memoryModal: document.getElementById('memory-modal'),
       memoryImg: document.getElementById('memory-img'),
       memoryFallback: document.getElementById('memory-fallback'),
@@ -85,21 +81,7 @@ export class Game {
   setupEvents() {
     this.ui.btnStartGame.addEventListener('click', () => {
       this.ui.startScreen.classList.add('hidden');
-      this.playStoryVideo('intro', () => {
-        this.startLevel(1);
-      });
-    });
-
-    this.ui.btnSkipVideo.addEventListener('click', () => {
-      this.stopVideoAndContinue();
-    });
-
-    this.ui.video.addEventListener('ended', () => {
-      this.stopVideoAndContinue();
-    });
-
-    this.ui.video.addEventListener('error', () => {
-      this.stopVideoAndContinue();
+      this.startLevel(1);
     });
 
     this.ui.btnCloseMemory.addEventListener('click', () => {
@@ -117,10 +99,12 @@ export class Game {
 
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && !this.isPaused) this.dropBlock();
-      // Phím tắt kiểm thử nhanh cho ban giám khảo
-      if (e.key === '1') this.startLevel(1);
-      if (e.key === '2') this.startLevel(2);
-      if (e.key === '3') this.startLevel(3);
+      // Phím tắt kiểm thử nhanh cho ban giám khảo/demo
+      if (['1', '2', '3'].includes(e.key)) {
+        this.ui.endModal.classList.add('hidden');
+        this.ui.memoryModal.classList.add('hidden');
+        this.startLevel(Number(e.key));
+      }
     });
 
     this.ui.btnReplay.addEventListener('click', () => {
@@ -142,49 +126,15 @@ export class Game {
         this.startLevel(nextLvl);
       } else {
         this.ui.endModal.classList.add('hidden');
-        this.playStoryVideo('outro', () => {
-          this.showVictoryScreen();
-        });
+        this.showVictoryScreen();
       }
     });
-  }
-
-  playStoryVideo(type, onComplete) {
-    this.isPaused = true;
-    this.onVideoEndCallback = onComplete;
-    const videoSrc = (ASSETS && ASSETS.VIDEOS && ASSETS.VIDEOS[type]) ? ASSETS.VIDEOS[type] : null;
-
-    if (!videoSrc) {
-      this.stopVideoAndContinue();
-      return;
-    }
-
-    fetch(videoSrc, { method: 'HEAD' })
-      .then((res) => {
-        if (res.ok) {
-          this.ui.video.src = videoSrc;
-          this.ui.videoOverlay.classList.remove('hidden');
-          this.ui.video.play().catch(() => this.stopVideoAndContinue());
-        } else {
-          this.stopVideoAndContinue();
-        }
-      })
-      .catch(() => this.stopVideoAndContinue());
-  }
-
-  stopVideoAndContinue() {
-    this.ui.video.pause();
-    this.ui.videoOverlay.classList.add('hidden');
-    if (this.onVideoEndCallback) {
-      const cb = this.onVideoEndCallback;
-      this.onVideoEndCallback = null;
-      cb();
-    }
   }
 
   startLevel(lvl) {
     this.currentLevel = Number(lvl);
     const lvlCfg = CONFIG.LEVELS[this.currentLevel];
+    const blockAsset = ASSETS.BLOCKS[`map${this.currentLevel}`];
 
     this.landedBlocks = [];
     this.camera.reset();
@@ -201,7 +151,8 @@ export class Game {
       150,
       45,
       '#475569',
-      true
+      true,
+      blockAsset
     );
     this.landedBlocks.push(baseBlock);
 
@@ -215,6 +166,7 @@ export class Game {
 
   spawnNextBlock() {
     const lvlCfg = CONFIG.LEVELS[this.currentLevel];
+    const blockAsset = ASSETS.BLOCKS[`map${this.currentLevel}`];
     const variations = lvlCfg.blockVariations;
     const variant = variations[Math.floor(Math.random() * variations.length)];
     const topBlock = this.landedBlocks[this.landedBlocks.length - 1];
@@ -229,7 +181,8 @@ export class Game {
       variant.width,
       variant.height,
       variant.color,
-      false
+      false,
+      blockAsset
     );
 
     this.currentBlock.setInstability(this.cumulativeInstability);

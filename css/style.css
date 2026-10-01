@@ -549,50 +549,6 @@ canvas {
 
 .btn-pulse:active { transform: scale(0.96); }
 
-/* --- KHUNG PHÁT VIDEO DỌC 9:16 (VIDEO OVERLAY) --- */
-#video-overlay {
-  background: #000;
-  z-index: 150;
-}
-
-.video-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #000;
-}
-
-#story-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Đảm bảo video 9:16 tràn đều khớp khung điện thoại */
-}
-
-.btn-skip {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #ffffff;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: bold;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  z-index: 10;
-  transition: background 0.2s;
-}
-
-.btn-skip:active {
-  background: rgba(56, 189, 248, 0.8);
-  color: #0f172a;
-}
-
 /* --- POPUP KÝ ỨC GIỮA CÁC MAP --- */
 .memory-card {
   width: 86%;

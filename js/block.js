@@ -1,4 +1,5 @@
 import { CONFIG } from './config.js';
+import { ASSETS, assetLoader } from './assets.js';
 
 export const BlockState = {
   SWINGING: 'SWINGING',
@@ -8,10 +9,12 @@ export const BlockState = {
 };
 
 export class Block {
-  constructor(pivotX, pivotY, width, height, color, isBase = false) {
+  constructor(pivotX, pivotY, width, height, color, isBase = false, assetSrc = null) {
     this.width = width;
     this.height = height;
     this.color = color || '#38bdf8';
+    this.asset = assetLoader.getImage(assetSrc);
+    this.assetBounds = ASSETS.SPRITE_BOUNDS[assetSrc];
     this.state = isBase ? BlockState.LANDED : BlockState.SWINGING;
 
     // TỌA ĐỘ NEO ĐIỂM TREO DÂY ÁNH SÁNG
@@ -116,31 +119,36 @@ export class Block {
     if (this.state === BlockState.SWINGING) {
       const renderPivotY = this.pivotY - camera.y;
       const blockCenterX = this.x + this.width / 2;
-
-      // Quầng sáng dây
+      const ropeAnchorY = renderY + Math.min(8, this.height * 0.2);
       ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
       ctx.lineWidth = 3.5;
       ctx.shadowColor = '#facc15';
       ctx.shadowBlur = 12;
       ctx.beginPath();
       ctx.moveTo(this.pivotX, renderPivotY);
-      ctx.lineTo(blockCenterX, renderY);
+      ctx.lineTo(blockCenterX, ropeAnchorY);
       ctx.stroke();
-
-      // Lõi dây sáng
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
 
-    // VẼ KHỐI NHÀ
-    ctx.fillStyle = this.color;
-    ctx.fillRect(this.x, renderY, this.width, this.height);
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(this.x, renderY, this.width, this.height);
+    if (this.asset && this.asset.isLoaded) {
+      const sprite = this.assetBounds;
+      if (sprite) {
+        ctx.drawImage(
+          this.asset,
+          sprite.x, sprite.y, sprite.width, sprite.height,
+          this.x, renderY, this.width, this.height
+        );
+      } else {
+        ctx.drawImage(this.asset, this.x, renderY, this.width, this.height);
+      }
+    } else {
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.x, renderY, this.width, this.height);
+    }
 
     ctx.restore();
   }
