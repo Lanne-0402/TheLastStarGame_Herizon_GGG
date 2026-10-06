@@ -1,4 +1,5 @@
 import { CONFIG } from './config.js';
+import { ASSETS, assetLoader } from './assets.js';
 
 export class ParallaxBackground {
   constructor() {
@@ -26,6 +27,13 @@ export class ParallaxBackground {
 
   render(ctx, camera, level, floor) {
     const camY = camera.y;
+    const mapAsset = assetLoader.getImage(ASSETS.BACKGROUNDS[`map${level}`]);
+
+    if (mapAsset && mapAsset.isLoaded) {
+      const mapHeight = mapAsset.naturalHeight * (CONFIG.CANVAS_WIDTH / mapAsset.naturalWidth);
+      ctx.drawImage(mapAsset, 0, -camY, CONFIG.CANVAS_WIDTH, mapHeight);
+      return;
+    }
 
     if (level === 1) {
       // --- NỀN LEVEL 1: THÀNH PHỐ ĐÊM DUSK TO NIGHT ---

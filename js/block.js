@@ -1,4 +1,5 @@
 import { CONFIG } from './config.js';
+import { ASSETS, assetLoader } from './assets.js';
 
 export const BlockState = {
   SWINGING: 'SWINGING',

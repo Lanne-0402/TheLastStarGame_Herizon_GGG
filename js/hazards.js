@@ -111,8 +111,8 @@ export class StormSystem {
       this.drops.push({
         x: Math.random() * CONFIG.CANVAS_WIDTH,
         y: Math.random() * CONFIG.CANVAS_HEIGHT,
-        length: 12 + Math.random() * 10,
-        speed: 750 + Math.random() * 300
+        length: 8 + Math.random() * 7,
+        speed: 520 + Math.random() * 220
       });
     }
   }
@@ -144,8 +144,8 @@ export class StormSystem {
 
   render(ctx) {
     ctx.save();
-    ctx.strokeStyle = 'rgba(186, 230, 253, 0.45)';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = 'rgba(186, 230, 253, 0.3)';
+    ctx.lineWidth = 1;
 
     ctx.beginPath();
     for (const drop of this.drops) {
