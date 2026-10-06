@@ -2,16 +2,21 @@ export const CONFIG = {
   CANVAS_WIDTH: 450,
   CANVAS_HEIGHT: 800,
   MAX_LIVES: 3,
+
+  ROPE_LENGTH: 140,
+  BASE_SWING_ANGLE: 0.55,      // Biên độ góc lắc (radian)
+  SWING_FREQUENCY: 2.2,      
+  DROP_SPEED: 850,
   // Thông số Level & Test
   TARGET_BLOCKS: 20,
   DEBUG_FAST_WIN: false,
   
   // Khối nhà mặc định
   BLOCK_WIDTH: 140,
-  BLOCK_HEIGHT: 45,
-  DROP_SPEED: 850,     
-  BASE_SWING_SPEED: 220, 
-  SPEED_INCREMENT: 4.5,  
+  BLOCK_HEIGHT: 45,      
+  SPEED_INCREMENT: 4.5,
+  
+  MAX_SWING_ANGLE: 0.48,      // Biên độ góc lắc (~37 độ tạo đường cong võng rõ rệt)  
 
   // Dung sai tính điểm 
   PERFECT_TOLERANCE: 4, 
@@ -19,39 +24,30 @@ export const CONFIG = {
   LEVELS: {
     1: {
       name: 'Ngoại Ô Thành Phố',
-      targetBlocks: 15,
-      starMilestones: [4, 9, 14], // Xuất hiện sao ở các mốc block
-      blockVariations: [
-        { width: 140, height: 42, color: '#38bdf8' },
-        { width: 120, height: 40, color: '#60a5fa' },
-        { width: 150, height: 45, color: '#0284c7' }
-      ]
+      targetBlocks: 15,        // Đúng chuẩn GDD
+      starFloors: [5, 10, 15], // 3 Ngôi sao ký ức rải ở các mốc tầng
+      baseWidth: 140,
+      baseHeight: 45,
+      hazard: 'none'
     },
     2: {
       name: 'Bãi Biển Lộng Gió',
-      targetBlocks: 20,
-      starMilestones: [6, 12, 19],
-      blockVariations: [
-        { width: 130, height: 40, color: '#0d9488' },
-        { width: 110, height: 38, color: '#14b8a6' },
-        { width: 140, height: 44, color: '#0f766e' }
-      ]
+      targetBlocks: 20,        // Đúng chuẩn GDD
+      starFloors: [6, 14, 20],
+      baseWidth: 125,
+      baseHeight: 45,
+      hazard: 'wind'           // Gió thổi làm lệch dây
     },
     3: {
-      name: 'Tầng Mây & Bầu Trời Mở',
-      targetBlocks: 30,
-      starMilestones: [8, 18, 29],
-      blockVariations: [
-        { width: 120, height: 40, color: '#818cf8' },
-        { width: 100, height: 38, color: '#6366f1' },
-        { width: 135, height: 42, color: '#4f46e5' }
-      ]
+      name: 'Tầng Mây / Bầu Trời',
+      targetBlocks: 30,        // Đúng chuẩn GDD
+      starFloors: [10, 20, 30],
+      baseWidth: 110,
+      baseHeight: 45,
+      hazard: 'sway'           // Biên độ đung đưa tích lũy
     }
   },
-  // 1. THÔNG SỐ ĐUNG ĐƯA CON LẮC VÒNG CUNG (PENDULUM ARC)
-  ROPE_LENGTH: 280,           // Chiều dài sợi dây ánh sáng
-  BASE_SWING_SPEED: 2.1,      // Tốc độ lắc (rad/s)
-  MAX_SWING_ANGLE: 0.48,      // Biên độ góc lắc (~37 độ tạo đường cong võng rõ rệt)
+
 
   // 2. QUY CHUẨN XẾP LOẠI S/A/B/C (Tính trên % điểm tối đa: targetBlocks * 10đ)
   RANK_THRESHOLDS: {
@@ -75,43 +71,5 @@ export const CONFIG = {
   WHIRLWIND_RADIUS: 90,
   WHIRLWIND_PULL_FORCE: 95,
   MAX_WIND_FORCE: 160,
-  RAIN_COUNT: 36,
-
-  // --- DEV-10 & DEV-11: CẤU HÌNH ITEM & ESG ---
-  ITEM_TYPES: {
-    NORMAL: {
-      id: 'normal',
-      name: 'Nhà Chuẩn',
-      heightMul: 1.0,
-      maxScore: 10,
-      pollutionDelta: 2,     // Tăng nhẹ ô nhiễm ánh sáng
-      color: '#38bdf8'
-    },
-    GREEN: {
-      id: 'green',
-      name: 'Mái Xanh Sinh Thái',
-      heightMul: 1.0,
-      maxScore: 10,
-      pollutionDelta: -18,
-      color: '#22c55e'
-    },
-    GREEN_ROOF: {
-      id: 'green',
-      name: 'Mái Xanh Sinh Thái',
-      heightMul: 1.0,
-      maxScore: 10,
-      pollutionDelta: -18,   // Giảm mạnh ô nhiễm ánh sáng
-      color: '#22c55e'
-    },
-    NEON: {
-      id: 'neon',
-      name: 'Tòa Neon Đô Thị',
-      heightMul: 2.0,        // Chiều cao gấp đôi
-      maxScore: 30,          // Thang điểm tối đa 30
-      pollutionDelta: +25,   // Ô nhiễm nặng
-      color: '#ec4899'
-    }
-  },
-
-  ITEM_SPAWN_INTERVAL_FLOORS: 3 // Cứ 3 tầng xuất hiện 1 item lơ lửng
+  RAIN_COUNT: 75,
 };
